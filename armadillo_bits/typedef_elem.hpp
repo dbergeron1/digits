@@ -1,29 +1,41 @@
-// Copyright (C) 2008-2015 Conrad Sanderson
-// Copyright (C) 2008-2015 NICTA (www.nicta.com.au)
+// Copyright 2008-2016 Conrad Sanderson (http://conradsanderson.id.au)
+// Copyright 2008-2016 National ICT Australia (NICTA)
 // 
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------
 
 
 //! \addtogroup typedef_elem
 //! @{
 
 
-#if   UCHAR_MAX >= 0xff
-  typedef unsigned char    u8;
-  typedef          char    s8;
-#elif defined(UINT8_MAX)
-  typedef          uint8_t u8;
-  typedef           int8_t s8;
+#if (defined(ARMA_U8_TYPE) && defined(ARMA_S8_TYPE))
+    typedef ARMA_U8_TYPE     u8;
+    typedef ARMA_S8_TYPE     s8;
 #else
-  #error "don't know how to typedef 'u8' on this system"
+  #if   UCHAR_MAX >= 0xff
+    typedef unsigned char    u8;
+    typedef          char    s8;
+  #elif defined(UINT8_MAX)
+    typedef          uint8_t u8;
+    typedef           int8_t s8;
+  #else
+    #error "don't know how to typedef 'u8' on this system"
+  #endif
 #endif
 
 // NOTE:
-// "signed char" is not the same as "char". 
-// http://www.embedded.com/columns/programmingpointers/206107018
-// http://en.wikipedia.org/wiki/C_variable_types_and_declarations
+// "char" is not guaranteed to be the same as "signed char" 
+// https://en.wikipedia.org/wiki/C_data_types
 
 
 #if   USHRT_MAX >= 0xffff
@@ -95,6 +107,15 @@ typedef          long slng_t;
 #endif
 
 
+typedef std::complex<float>  cx_float;
+typedef std::complex<double> cx_double;
+
+typedef void* void_ptr;
+
+
+//
+
+
 #if   defined(ARMA_BLAS_LONG_LONG)
   typedef long long blas_int;
   #define ARMA_MAX_BLAS_INT 0x7fffffffffffffffULL
@@ -107,10 +128,57 @@ typedef          long slng_t;
 #endif
 
 
-typedef std::complex<float>  cx_float;
-typedef std::complex<double> cx_double;
+//
 
-typedef void* void_ptr;
+
+#ifdef ARMA_USE_MKL_TYPES
+  // for compatibility with MKL
+  typedef MKL_Complex8  blas_cxf;
+  typedef MKL_Complex16 blas_cxd;
+#else
+  // standard BLAS and LAPACK prototypes use "void*" pointers for complex arrays
+  typedef void blas_cxf;
+  typedef void blas_cxd;
+#endif
+
+
+//
+
+
+// NOTE: blas_len is the fortran type for "hidden" arguments that specify the length of character arguments;
+// NOTE: it varies across compilers, compiler versions and systems (eg. 32 bit vs 64 bit);
+// NOTE: the default setting of "size_t" is an educated guess.
+// NOTE: ---
+// NOTE: for gcc / gfortran:  https://gcc.gnu.org/onlinedocs/gfortran/Argument-passing-conventions.html
+// NOTE: gcc 7 and earlier: int
+// NOTE: gcc 8 and 9:       size_t
+// NOTE: ---
+// NOTE: for ifort (intel fortran compiler): 
+// NOTE: "Intel Fortran Compiler User and Reference Guides", Document Number: 304970-006US, 2009, p. 301
+// NOTE: http://www.complexfluids.ethz.ch/MK/ifort.pdf
+// NOTE: the type is unsigned 4-byte integer on 32 bit systems
+// NOTE: the type is unsigned 8-byte integer on 64 bit systems
+// NOTE: ---
+// NOTE: for NAG fortran: https://www.nag.co.uk/nagware/np/r62_doc/manual/compiler_11_1.html#AUTOTOC_11_1
+// NOTE: Chrlen = usually int, or long long on 64-bit Windows
+// NOTE: ---
+// TODO: flang:  https://github.com/flang-compiler/flang/wiki
+// TODO: other compilers: http://fortranwiki.org/fortran/show/Compilers
+
+#if !defined(ARMA_FORTRAN_CHARLEN_TYPE)
+  #if defined(__GNUC__) && !defined(__clang__)
+    #if (__GNUC__ <= 7)
+      #define ARMA_FORTRAN_CHARLEN_TYPE int
+    #else
+      #define ARMA_FORTRAN_CHARLEN_TYPE size_t
+    #endif
+  #else
+    // TODO: determine the type for other compilers
+    #define ARMA_FORTRAN_CHARLEN_TYPE size_t
+  #endif
+#endif
+
+typedef ARMA_FORTRAN_CHARLEN_TYPE blas_len;
 
 
 //! @}

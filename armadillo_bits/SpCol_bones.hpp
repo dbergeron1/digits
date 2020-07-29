@@ -1,16 +1,24 @@
-// Copyright (C) 2011-2012 Ryan Curtin
-// Copyright (C) 2011 Matthew Amidon
-//
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Copyright 2008-2016 Conrad Sanderson (http://conradsanderson.id.au)
+// Copyright 2008-2016 National ICT Australia (NICTA)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------
 
 
 //! \addtogroup SpCol
 //! @{
 
-//! Class for sparse column vectors (matrices with only one column)
 
+//! Class for sparse column vectors (matrices with only one column)
 template<typename eT>
 class SpCol : public SpMat<eT>
   {
@@ -19,30 +27,36 @@ class SpCol : public SpMat<eT>
   typedef eT                                elem_type;
   typedef typename get_pod_type<eT>::result pod_type;
   
-  static const bool is_row = false;
-  static const bool is_col = true;
+  static const bool is_row  = false;
+  static const bool is_col  = true;
+  static const bool is_xvec = false;
   
   
   inline          SpCol();
   inline explicit SpCol(const uword n_elem);
-  inline          SpCol(const uword in_rows, const uword in_cols);
+  inline explicit SpCol(const uword in_rows, const uword in_cols);
+  inline explicit SpCol(const SizeMat& s);
   
-  inline                  SpCol(const char*        text);
-  inline const SpCol& operator=(const char*        text);
+  inline            SpCol(const char*        text);
+  inline SpCol& operator=(const char*        text);
   
-  inline                  SpCol(const std::string& text);
-  inline const SpCol& operator=(const std::string& text);
+  inline            SpCol(const std::string& text);
+  inline SpCol& operator=(const std::string& text);
   
-  inline const SpCol& operator=(const eT val);
+  inline SpCol& operator=(const eT val);
   
-  template<typename T1> inline                  SpCol(const Base<eT,T1>& X);
-  template<typename T1> inline const SpCol& operator=(const Base<eT,T1>& X);
+  template<typename T1> inline            SpCol(const Base<eT,T1>& X);
+  template<typename T1> inline SpCol& operator=(const Base<eT,T1>& X);
   
-  template<typename T1> inline                  SpCol(const SpBase<eT,T1>& X);
-  template<typename T1> inline const SpCol& operator=(const SpBase<eT,T1>& X);
+  template<typename T1> inline            SpCol(const SpBase<eT,T1>& X);
+  template<typename T1> inline SpCol& operator=(const SpBase<eT,T1>& X);
   
   template<typename T1, typename T2>
   inline explicit SpCol(const SpBase<pod_type,T1>& A, const SpBase<pod_type,T2>& B);
+  
+  inline const SpOp<SpCol<eT>,spop_htrans>  t() const;
+  inline const SpOp<SpCol<eT>,spop_htrans> ht() const;
+  inline const SpOp<SpCol<eT>,spop_strans> st() const;
   
   inline void shed_row (const uword row_num);
   inline void shed_rows(const uword in_row1, const uword in_row2);

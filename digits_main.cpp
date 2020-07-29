@@ -13,6 +13,8 @@ int main()
 	
 	network NN(layers);
 	
+	NN.SGD(20, 10, 1.0, true);
+	
 	
 	return 0;
 }

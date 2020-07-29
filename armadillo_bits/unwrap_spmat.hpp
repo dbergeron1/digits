@@ -1,9 +1,17 @@
-// Copyright (C) 2012-2015 Conrad Sanderson
-// Copyright (C) 2012-2015 NICTA (www.nicta.com.au)
+// Copyright 2008-2016 Conrad Sanderson (http://conradsanderson.id.au)
+// Copyright 2008-2016 National ICT Australia (NICTA)
 // 
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------
 
 
 //! \addtogroup unwrap_spmat
@@ -26,6 +34,9 @@ struct unwrap_spmat
     }
   
   const SpMat<eT> M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>&) const { return false; }
   };
 
 
@@ -40,9 +51,14 @@ struct unwrap_spmat< SpMat<eT> >
     : M(A)
     {
     arma_extra_debug_sigprint();
+    
+    M.sync();
     }
   
   const SpMat<eT>& M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>& X) const { return (void_ptr(&M) == void_ptr(&X)); }
   };
 
 
@@ -57,9 +73,14 @@ struct unwrap_spmat< SpRow<eT> >
     : M(A)
     {
     arma_extra_debug_sigprint();
+    
+    M.sync();
     }
   
   const SpRow<eT>& M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>& X) const { return (void_ptr(&M) == void_ptr(&X)); }
   };
 
 
@@ -74,9 +95,14 @@ struct unwrap_spmat< SpCol<eT> >
     : M(A)
     {
     arma_extra_debug_sigprint();
+    
+    M.sync();
     }
   
   const SpCol<eT>& M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>& X) const { return (void_ptr(&M) == void_ptr(&X)); }
   };
 
 
@@ -96,6 +122,9 @@ struct unwrap_spmat< SpOp<T1, spop_type> >
     }
   
   const SpMat<eT> M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>&) const { return false; }
   };
 
 
@@ -115,6 +144,9 @@ struct unwrap_spmat< SpGlue<T1, T2, spglue_type> >
     }
   
   const SpMat<eT> M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>&) const { return false; }
   };
 
 
@@ -132,6 +164,29 @@ struct unwrap_spmat< mtSpOp<out_eT, T1, spop_type> >
     }
   
   const SpMat<out_eT> M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>&) const { return false; }
+  };
+
+
+
+template<typename out_eT, typename T1, typename T2, typename spglue_type>
+struct unwrap_spmat< mtSpGlue<out_eT, T1, T2, spglue_type> >
+  {
+  typedef SpMat<out_eT> stored_type;
+  
+  inline
+  unwrap_spmat(const mtSpGlue<out_eT, T1, T2, spglue_type>& A)
+    : M(A)
+    {
+    arma_extra_debug_sigprint();
+    }
+  
+  const SpMat<out_eT> M;
+  
+  template<typename eT2>
+  arma_inline bool is_alias(const SpMat<eT2>&) const { return false; }
   };
 
 

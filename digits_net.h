@@ -97,9 +97,21 @@ void network::test_network()
 
 int network::digit(mat a_out)
 {
-	int i=0, j=-1;
-	while (i<10 && a_out(i)<0.5) i++;
-	if (i<10) j=i;
+	int i=0, i_max=0, j=-1;
+	double a_out_max=a_out(i);
+	for (i=0; i<10; i++)
+	{
+		if (a_out(i)>a_out_max)
+		{
+			a_out_max=a_out(i);
+			i_max=i;
+		}
+	}
+	j=i_max;
+//	if (a_out_max>0.5) j=i_max;
+	
+//	while (i<10 && a_out(i)<0.5) i++;
+//	if (i<10) j=i;
 	
 	return j;
 }
@@ -127,8 +139,8 @@ void network::SGD(int N_epochs, int batch_size, double eta, bool test)
 		}
 		if (test)
 		{
+			cout<<"epoch "<<i<<"  ";
 			test_network();
-			cout<<"epoch "<<i<<"  "<<endl;
 		}
 	}
 	
@@ -144,13 +156,13 @@ void network::update_batch(vector<uint8_t> labels, vector<mat> images, double et
 	vector<mat> grad_b(N_layers-1), delta_grad_b;
 	for (i=0; i<N_layers-1; i++)
 	{
-		grad_w[i].zeros(weights[i].size());
-		grad_b[i].zeros(biases[i].size());
+		grad_w[i].zeros(size(weights[i]));
+		grad_b[i].zeros(size(biases[i]));
 	}
 	delta_grad_w=grad_w;
 	delta_grad_b=grad_b;
 	
-	for (i=0; i<labels.size(); i++)
+	for (i=0; i<batch_size; i++)
 	{
 		backprop(labels[i],images[i],delta_grad_w,delta_grad_b);
 		for (j=0; j<N_layers-1; j++)
@@ -192,12 +204,13 @@ void network::backprop(uint8_t label, const mat &image, vector<mat> &delta_grad_
 	mat delta=diff_cost_func(activation, label) % diff_activation_func(z);
 	delta_grad_b[N_layers-2]=delta;
 	delta_grad_w[N_layers-2]=delta*activations[N_layers-2].t();
-	mat dafz;
+	mat dafz, wd;
 	for (i=N_layers-3; i>=0; i--)
 	{
 		z=zs[i];
 		dafz=diff_activation_func(z);
-		delta=(weights[i+1].t()*delta) % dafz;
+		wd=weights[i+1].t()*delta;
+		delta=wd % dafz;
 		delta_grad_b[i]=delta;
 		delta_grad_w[i]=delta*activations[i].t();
 	}
@@ -207,7 +220,7 @@ void network::backprop(uint8_t label, const mat &image, vector<mat> &delta_grad_
 
 mat network::diff_cost_func(mat a_out, uint8_t label)
 {
-	mat y=zeros(a_out.size());
+	mat y=zeros(size(a_out));
 	y(label)=1.0;
 	
 	mat dcf=a_out-y;

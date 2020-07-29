@@ -1,10 +1,17 @@
-// Copyright (C) 2012-2015 Conrad Sanderson
-// Copyright (C) 2012-2015 NICTA (www.nicta.com.au)
-// Copyright (C) 2012 Arnold Wiliem
+// Copyright 2008-2016 Conrad Sanderson (http://conradsanderson.id.au)
+// Copyright 2008-2016 National ICT Australia (NICTA)
 // 
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------
 
 
 
@@ -16,23 +23,33 @@
 template<typename T1>
 inline
 bool
-op_unique::apply_helper(Mat<typename T1::elem_type>& out, const Proxy<T1>& P)
+op_unique::apply_helper(Mat<typename T1::elem_type>& out, const Proxy<T1>& P, const bool P_is_row)
   {
   arma_extra_debug_sigprint();
   
   typedef typename T1::elem_type eT;
   
-  const uword n_rows = P.get_n_rows();
-  const uword n_cols = P.get_n_cols();
   const uword n_elem = P.get_n_elem();
   
-  if(n_elem == 0)  { out.set_size(n_rows, n_cols); return true; }
+  if(n_elem == 0)
+    {
+    if(P_is_row)
+      {
+      out.set_size(1,0);
+      }
+    else
+      {
+      out.set_size(0,1);
+      }
+    
+    return true;
+    }
   
   if(n_elem == 1)
     {
-    const eT tmp = Proxy<T1>::prefer_at_accessor ? P.at(0,0) : P[0];
+    const eT tmp = (Proxy<T1>::use_at) ? P.at(0,0) : P[0];
     
-    out.set_size(n_rows, n_cols);
+    out.set_size(1, 1);
     
     out[0] = tmp;
     
@@ -43,7 +60,7 @@ op_unique::apply_helper(Mat<typename T1::elem_type>& out, const Proxy<T1>& P)
   
   eT* X_mem = X.memptr();
   
-  if(Proxy<T1>::prefer_at_accessor == false)
+  if(Proxy<T1>::use_at == false)
     {
     typename Proxy<T1>::ea_type Pea = P.get_ea();
     
@@ -51,19 +68,22 @@ op_unique::apply_helper(Mat<typename T1::elem_type>& out, const Proxy<T1>& P)
       {
       const eT val = Pea[i];
       
-      if(arma_isnan(val))  { out.reset(); return false; }
+      if(arma_isnan(val))  { out.soft_reset(); return false; }
       
       X_mem[i] = val;
       }
     }
   else
     {
+    const uword n_rows = P.get_n_rows();
+    const uword n_cols = P.get_n_cols();
+    
     for(uword col=0; col < n_cols; ++col)
     for(uword row=0; row < n_rows; ++row)
       {
       const eT val = P.at(row,col);
       
-      if(arma_isnan(val))  { out.reset(); return false; }
+      if(arma_isnan(val))  { out.soft_reset(); return false; }
       
       (*X_mem) = val;  X_mem++;
       }
@@ -87,29 +107,14 @@ op_unique::apply_helper(Mat<typename T1::elem_type>& out, const Proxy<T1>& P)
     if(diff != eT(0)) { ++N_unique; }
     }
   
-  uword out_n_rows;
-  uword out_n_cols;
-  
-  if( (n_rows == 1) || (n_cols == 1) )
+  if(P_is_row)
     {
-    if(n_rows == 1)
-      {
-      out_n_rows = 1;
-      out_n_cols = N_unique;
-      }
-    else
-      {
-      out_n_rows = N_unique;
-      out_n_cols = 1;
-      }
+    out.set_size(1, N_unique);
     }
   else
     {
-    out_n_rows = N_unique;
-    out_n_cols = 1;
+    out.set_size(N_unique, 1);
     }
-  
-  out.set_size(out_n_rows, out_n_cols);
   
   eT* out_mem = out.memptr();
   
@@ -139,7 +144,25 @@ op_unique::apply(Mat<typename T1::elem_type>& out, const Op<T1, op_unique>& in)
   
   const Proxy<T1> P(in.m);
   
-  const bool all_non_nan = op_unique::apply_helper(out, P);
+  const bool all_non_nan = op_unique::apply_helper(out, P, false);
+  
+  arma_debug_check( (all_non_nan == false), "unique(): detected NaN" );
+  }
+
+
+
+template<typename T1>
+inline
+void
+op_unique_vec::apply(Mat<typename T1::elem_type>& out, const Op<T1, op_unique_vec>& in)
+  {
+  arma_extra_debug_sigprint();
+  
+  const Proxy<T1> P(in.m);
+  
+  const bool P_is_row = (T1::is_xvec) ? bool(P.get_n_rows() == 1) : bool(T1::is_row);
+  
+  const bool all_non_nan = op_unique::apply_helper(out, P, P_is_row);
   
   arma_debug_check( (all_non_nan == false), "unique(): detected NaN" );
   }

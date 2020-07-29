@@ -1,9 +1,17 @@
-// Copyright (C) 2010-2013 Conrad Sanderson
-// Copyright (C) 2010-2013 NICTA (www.nicta.com.au)
+// Copyright 2008-2016 Conrad Sanderson (http://conradsanderson.id.au)
+// Copyright 2008-2016 National ICT Australia (NICTA)
 // 
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------
 
 
 
@@ -24,16 +32,13 @@ glue_cross::apply(Mat<typename T1::elem_type>& out, const Glue<T1, T2, glue_cros
   const Proxy<T1> PA(X.A);
   const Proxy<T2> PB(X.B);
   
-  arma_debug_check( ((PA.get_n_elem() != 3) || (PB.get_n_elem() != 3)), "cross(): input vectors must have 3 elements" );
+  arma_debug_check( ((PA.get_n_elem() != 3) || (PB.get_n_elem() != 3)), "cross(): each vector must have 3 elements" );
   
-  const uword PA_n_rows = Proxy<T1>::is_row ? 1 : PA.get_n_rows();
-  const uword PA_n_cols = Proxy<T1>::is_col ? 1 : PA.get_n_cols();
-  
-  out.set_size(PA_n_rows, PA_n_cols);
+  out.set_size(PA.get_n_rows(), PA.get_n_cols());
   
   eT* out_mem = out.memptr();
   
-  if( (Proxy<T1>::prefer_at_accessor == false) && (Proxy<T2>::prefer_at_accessor == false) )
+  if( (Proxy<T1>::use_at == false) && (Proxy<T2>::use_at == false) )
     {
     typename Proxy<T1>::ea_type A = PA.get_ea();
     typename Proxy<T2>::ea_type B = PB.get_ea();
@@ -52,7 +57,7 @@ glue_cross::apply(Mat<typename T1::elem_type>& out, const Glue<T1, T2, glue_cros
     }
   else
     {
-    const bool PA_is_col = Proxy<T1>::is_col ? true : (PA_n_cols       == 1);
+    const bool PA_is_col = Proxy<T1>::is_col ? true : (PA.get_n_cols() == 1);
     const bool PB_is_col = Proxy<T2>::is_col ? true : (PB.get_n_cols() == 1);
     
     const eT ax = PA.at(0,0);

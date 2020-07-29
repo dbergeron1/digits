@@ -1,9 +1,17 @@
-// Copyright (C) 2008-2014 Conrad Sanderson
-// Copyright (C) 2008-2014 NICTA (www.nicta.com.au)
+// Copyright 2008-2016 Conrad Sanderson (http://conradsanderson.id.au)
+// Copyright 2008-2016 National ICT Australia (NICTA)
 // 
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ------------------------------------------------------------------------
 
 
 
@@ -22,7 +30,7 @@ bool
 arma_isfinite(eT val)
   {
   arma_ignore(val);
-    
+  
   return true;
   }
 
@@ -321,6 +329,52 @@ arma_log1p(const double x)
 
 
 
+//
+// implementation of arma_sign()
+
+
+template<typename eT>
+arma_inline
+typename arma_unsigned_integral_only<eT>::result
+arma_sign(const eT x)
+  {
+  return (x > eT(0)) ? eT(+1) : eT(0);
+  }
+
+
+
+template<typename eT>
+arma_inline
+typename arma_signed_integral_only<eT>::result
+arma_sign(const eT x)
+  {
+  return (x > eT(0)) ? eT(+1) : ( (x < eT(0)) ? eT(-1) : eT(0) );
+  }
+
+
+
+template<typename eT>
+arma_inline
+typename arma_real_only<eT>::result
+arma_sign(const eT x)
+  {
+  return (x > eT(0)) ? eT(+1) : ( (x < eT(0)) ? eT(-1) : eT(0) );
+  }
+
+
+
+template<typename eT>
+arma_inline
+typename arma_cx_only<eT>::result
+arma_sign(const eT& x)
+  {
+  typedef typename eT::value_type T;
+  
+  const T abs_x = std::abs(x);
+  
+  return (abs_x != T(0)) ? (x / abs_x) : x;
+  }
+
 
 
 //
@@ -365,7 +419,7 @@ arma_acos(const std::complex<T>& x)
   #else
     {
     arma_ignore(x);
-    arma_stop("acos(): need C++11 compiler");
+    arma_stop_logic_error("acos(): C++11 compiler required");
     
     return std::complex<T>(0);
     }
@@ -390,7 +444,7 @@ arma_asin(const std::complex<T>& x)
   #else
     {
     arma_ignore(x);
-    arma_stop("asin(): need C++11 compiler");
+    arma_stop_logic_error("asin(): C++11 compiler required");
     
     return std::complex<T>(0);
     }
@@ -415,7 +469,7 @@ arma_atan(const std::complex<T>& x)
   #else
     {
     arma_ignore(x);
-    arma_stop("atan(): need C++11 compiler");
+    arma_stop_logic_error("atan(): C++11 compiler required");
     
     return std::complex<T>(0);
     }
@@ -537,7 +591,7 @@ arma_acosh(const std::complex<T>& x)
   #else
     {
     arma_ignore(x);
-    arma_stop("acosh(): need C++11 compiler");
+    arma_stop_logic_error("acosh(): C++11 compiler required");
     
     return std::complex<T>(0);
     }
@@ -562,7 +616,7 @@ arma_asinh(const std::complex<T>& x)
   #else
     {
     arma_ignore(x);
-    arma_stop("asinh(): need C++11 compiler");
+    arma_stop_logic_error("asinh(): C++11 compiler required");
     
     return std::complex<T>(0);
     }
@@ -587,12 +641,249 @@ arma_atanh(const std::complex<T>& x)
   #else
     {
     arma_ignore(x);
-    arma_stop("atanh(): need C++11 compiler");
+    arma_stop_logic_error("atanh(): C++11 compiler required");
     
     return std::complex<T>(0);
     }
   #endif
   }
+
+
+
+//
+// wrappers for hypot(x, y) = sqrt(x^2 + y^2)
+
+
+template<typename eT>
+inline
+eT
+arma_hypot_generic(const eT x, const eT y)
+  {
+  #if defined(ARMA_USE_CXX11)
+    {
+    return std::hypot(x, y);
+    }
+  #elif defined(ARMA_HAVE_TR1)
+    {
+    return std::tr1::hypot(x, y);
+    }
+  #else
+    {
+    const eT xabs = std::abs(x);
+    const eT yabs = std::abs(y);
+    
+    eT larger;
+    eT ratio;
+    
+    if(xabs > yabs)
+      {
+      larger = xabs;
+      ratio  = yabs / xabs;
+      }
+    else
+      {
+      larger = yabs;
+      ratio  = xabs / yabs;
+      }
+    
+    return (larger == eT(0)) ? eT(0) : (larger * std::sqrt(eT(1) + ratio * ratio));
+    }
+  #endif
+  }
+
+
+
+template<typename eT>
+inline
+eT
+arma_hypot(const eT x, const eT y)
+  {
+  arma_ignore(x);
+  arma_ignore(y);
+  
+  arma_stop_runtime_error("arma_hypot(): not implemented for integer or complex element types");
+  
+  return eT(0);
+  }
+
+
+
+template<>
+arma_inline
+float
+arma_hypot(const float x, const float y)
+  {
+  return arma_hypot_generic(x,y);
+  }
+
+
+
+template<>
+arma_inline
+double
+arma_hypot(const double x, const double y)
+  {
+  return arma_hypot_generic(x,y);
+  }
+
+
+
+//
+// implementation of arma_sinc()
+
+
+template<typename eT>
+arma_inline
+eT
+arma_sinc_generic(const eT x)
+  {
+  typedef typename get_pod_type<eT>::result T;
+  
+  const eT tmp = Datum<T>::pi * x;
+  
+  return (tmp == eT(0)) ? eT(1) : eT( std::sin(tmp) / tmp );
+  }
+
+
+
+template<typename eT>
+arma_inline
+eT
+arma_sinc(const eT x)
+  {
+  return eT( arma_sinc_generic( double(x) ) );
+  }
+
+
+
+template<>
+arma_inline
+float
+arma_sinc(const float x)
+  {
+  return arma_sinc_generic(x);
+  }
+
+
+
+template<>
+arma_inline
+double
+arma_sinc(const double x)
+  {
+  return arma_sinc_generic(x);
+  }
+
+
+
+template<typename T>
+arma_inline
+std::complex<T>
+arma_sinc(const std::complex<T>& x)
+  {
+  return arma_sinc_generic(x);
+  }
+
+
+
+//
+// wrappers for arg()
+
+
+template<typename eT>
+struct arma_arg
+  {
+  static
+  inline
+  eT
+  eval(const eT x)
+    {
+    #if defined(ARMA_USE_CXX11)
+      {
+      return eT( std::arg(x) );
+      }
+    #else
+      {
+      arma_ignore(x);
+      arma_stop_logic_error("arg(): C++11 compiler required");
+      
+      return eT(0);
+      }
+    #endif
+    }
+  };
+
+
+
+template<>
+struct arma_arg<float>
+  {
+  static
+  arma_inline
+  float
+  eval(const float x)
+    {
+    #if defined(ARMA_USE_CXX11)
+      {
+      return std::arg(x);
+      }
+    #else
+      {
+      return std::arg( std::complex<float>( x, float(0) ) );
+      }
+    #endif
+    }
+  };
+
+
+
+template<>
+struct arma_arg<double>
+  {
+  static
+  arma_inline
+  double
+  eval(const double x)
+    {
+    #if defined(ARMA_USE_CXX11)
+      {
+      return std::arg(x);
+      }
+    #else
+      {
+      return std::arg( std::complex<double>( x, double(0) ) );
+      }
+    #endif
+    }
+  };
+
+
+
+template<>
+struct arma_arg< std::complex<float> >
+  {
+  static
+  arma_inline
+  float
+  eval(const std::complex<float>& x)
+    {
+    return std::arg(x);
+    }
+  };
+
+
+
+template<>
+struct arma_arg< std::complex<double> >
+  {
+  static
+  arma_inline
+  double
+  eval(const std::complex<double>& x)
+    {
+    return std::arg(x);
+    }
+  };
 
 
 
