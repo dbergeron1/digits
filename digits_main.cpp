@@ -9,7 +9,7 @@
 
 int main()
 {
-	vector<int> layers{20,20};
+	vector<int> layers{50};
 	
 	network NN(layers);
 	
