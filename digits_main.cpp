@@ -9,9 +9,9 @@
 
 int main()
 {
-	network NN;
+	vector<int> layers{20,20};
 	
-	NN.load_data();
+	network NN(layers);
 	
 	
 	return 0;
