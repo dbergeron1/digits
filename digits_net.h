@@ -41,7 +41,7 @@ public:
 	mat activation_func(const mat &z);
 	mat diff_activation_func(const mat &z);
 	mat feedforward(const mat &a_in);
-	void shuffle_data();
+//	void shuffle_data();
 	void SGD(int N_epochs, int batch_size, double eta, bool test);
 	void update_batch(vector<uint8_t> labels, vector<mat> images, double eta);
 	void backprop(uint8_t label, const mat &image, vector<mat> &delta_grad_w, vector<mat> &delta_grad_b);
@@ -125,15 +125,18 @@ void network::SGD(int N_epochs, int batch_size, double eta, bool test)
 	
 	int N_batch=N_training/batch_size;
 	
+	Col<int> indices=linspace<Col<int>>(0,N_training-1,N_training);
+	Col<int> sh_indices=indices;
+	
 	for (i=0; i<N_epochs; i++)
 	{
-		shuffle_data();
+		sh_indices=shuffle(sh_indices);
 		for (j=0; j<N_batch; j++)
 		{
 			for (k=0; k<batch_size; k++)
 			{
-				labels[k]=training_labels[k+j*batch_size];
-				images[k]=training_images[k+j*batch_size];
+				labels[k]=training_labels[sh_indices[k+j*batch_size]];
+				images[k]=training_images[sh_indices[k+j*batch_size]];
 			}
 			update_batch(labels, images, eta);
 		}
@@ -142,7 +145,10 @@ void network::SGD(int N_epochs, int batch_size, double eta, bool test)
 			cout<<"epoch "<<i<<"  ";
 			test_network();
 		}
+		else cout<<"epoch "<<i<<" completed.\n";
 	}
+	
+//	if (!test) test_network();
 	
 }
 
@@ -228,6 +234,7 @@ mat network::diff_cost_func(mat a_out, uint8_t label)
 	return dcf;
 }
 
+/*
 void network::shuffle_data()
 {
 	Col<int> indices=linspace<Col<int>>(0,N_training-1,N_training);
@@ -241,7 +248,7 @@ void network::shuffle_data()
 		training_images[i]=images[sh_indices[i]];
 	}
 }
-
+*/
 
 mat network::activation_func(const mat &z)
 {
@@ -320,7 +327,7 @@ void network::load_dataset(string label_file_name, string image_file_name, vecto
 	for (i=0; i<N_labels; i++)
 	{
 		label_file.read( reinterpret_cast< char * >( &labels[i] ), 1);
-		if (i<10) cout<<setw(10)<<i<<(int)labels[i]<<endl;
+	//	if (i<10) cout<<setw(10)<<i<<(int)labels[i]<<endl;
 	}
 	
 	ifstream image_file(image_file_name,ios::binary);
@@ -361,9 +368,9 @@ void network::load_dataset(string label_file_name, string image_file_name, vecto
 			{
 				image_file.read( reinterpret_cast< char * >(&u), 1);
 				images[i][k+j*N_cols]=((double)u)/255;
-				if (i==itest) cout<<setw(5)<<images[i][k+j*N_cols];
+			//	if (i==itest) cout<<setw(5)<<images[i][k+j*N_cols];
 			}
-			if (i==itest) cout<<endl;
+		//	if (i==itest) cout<<endl;
 		}
 	}
 	
