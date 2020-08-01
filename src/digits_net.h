@@ -525,8 +525,8 @@ void network::load_data()
 	vector<uint8_t> labels;
 	vector<mat> images;
 	
-	string label_file("../../MNIST/train-labels-idx1-ubyte");
-	string image_file("../../MNIST/train-images-idx3-ubyte");
+	string label_file("../../../MNIST/train-labels-idx1-ubyte");
+	string image_file("../../../MNIST/train-images-idx3-ubyte");
 	load_dataset(label_file, image_file, labels, images);
 //	load_dataset(label_file, image_file, training_labels, training_images);
 //	N_training=training_labels.size();
@@ -554,8 +554,8 @@ void network::load_data()
 		eval_images[i-N_training]=images[sh_indices[i]];
 	}
 	
-	label_file="../../MNIST/t10k-labels-idx1-ubyte";
-	image_file="../../MNIST/t10k-images-idx3-ubyte";
+	label_file="../../../MNIST/t10k-labels-idx1-ubyte";
+	image_file="../../../MNIST/t10k-images-idx3-ubyte";
 	load_dataset(label_file, image_file, test_labels, test_images);
 	
 	N_test=test_labels.size();
