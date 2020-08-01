@@ -9,23 +9,46 @@
 
 int main()
 {
-	vector<int> layers{100};
-	
+	vector<int> layers{60};
+
+	int num_threads=2;
+	omp_set_num_threads(num_threads);
+
 	network NN(layers);
 	
-	clock_t t1=clock();
-	
-	int N_epochs=10;
-	int batch_size=10;
-	int eta=2.0;
+	int N_epochs=30;
+	int batch_size=20;
+	double eta=0.1;
 	bool test=true;
+	data_type_T test_data=TEST;
+	int N_tr=50000;
+	double reg_f=4.0;
 	
-	NN.SGD(N_epochs, batch_size, eta, test);
+//	cout<<"start\n";
+//	clock_t t1=clock();
 	
-	t1=clock()-t1;
-	cout<<((double)t1)/CLOCKS_PER_SEC<<" seconds for "<<N_epochs<<" epochs."<<endl;
+	struct timespec start, finish;
+	double elapsed;
 	
-	NN.test_network();
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	
+	NN.SGD_CE_mat(N_epochs, batch_size, eta, test, test_data, N_tr, reg_f);
+//	NN.SGD_CE(N_epochs, batch_size, eta, test, test_data, N_tr, reg_f);
+//	NN.SGD(N_epochs, batch_size, eta, test, test_data, N_tr, reg_f);
+	
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+	
+	elapsed = (finish.tv_sec - start.tv_sec);
+	elapsed += (finish.tv_nsec - start.tv_nsec) / 1.0e9;
+	
+	cout<<"elapsed time: "<<elapsed<<" seconds.\n"<<endl;
+	
+//	t1=clock()-t1;
+//	cout<<((double)t1)/CLOCKS_PER_SEC/num_threads<<" seconds for "<<N_epochs<<" epochs."<<endl;
+	
+	
+	
+	NN.test_network(TEST);
 	
 	return 0;
 }
