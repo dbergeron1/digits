@@ -15,8 +15,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include "armadillo"
 #include "graph_3D.h"
+//#include "gzstream.h"
 
 using namespace std;
 using namespace arma;
@@ -525,8 +525,8 @@ void network::load_data()
 	vector<uint8_t> labels;
 	vector<mat> images;
 	
-	string label_file("../../../MNIST/train-labels-idx1-ubyte");
-	string image_file("../../../MNIST/train-images-idx3-ubyte");
+	string label_file("../../MNIST/train-labels-idx1-ubyte");
+	string image_file("../../MNIST/train-images-idx3-ubyte");
 	load_dataset(label_file, image_file, labels, images);
 //	load_dataset(label_file, image_file, training_labels, training_images);
 //	N_training=training_labels.size();
@@ -554,8 +554,8 @@ void network::load_data()
 		eval_images[i-N_training]=images[sh_indices[i]];
 	}
 	
-	label_file="../../../MNIST/t10k-labels-idx1-ubyte";
-	image_file="../../../MNIST/t10k-images-idx3-ubyte";
+	label_file="../../MNIST/t10k-labels-idx1-ubyte";
+	image_file="../../MNIST/t10k-images-idx3-ubyte";
 	load_dataset(label_file, image_file, test_labels, test_images);
 	
 	N_test=test_labels.size();
@@ -565,6 +565,7 @@ void network::load_data()
 void network::load_dataset(string label_file_name, string image_file_name, vector<uint8_t> &labels, vector<mat> &images)
 {
 	ifstream label_file(label_file_name,ios::binary);
+//	igzstream label_file(label_file_name.c_str(),ios::binary);
 	
 	if (!label_file)
 	{
@@ -596,6 +597,7 @@ void network::load_dataset(string label_file_name, string image_file_name, vecto
 	}
 	
 	ifstream image_file(image_file_name,ios::binary);
+//	igzstream image_file(image_file_name.c_str(),ios::binary);
 	
 	image_file.read(reinterpret_cast< char * >( &mn ), 4 );
 	image_file.read(reinterpret_cast< char * >( &N_images ), 4 );

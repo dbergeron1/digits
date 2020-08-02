@@ -18,7 +18,7 @@ int main()
 	
 	int N_epochs=30;
 	int batch_size=20;
-	double eta=0.1;
+	double eta=0.5;
 	bool test=true;
 	data_type_T test_data=TEST;
 	int N_tr=50000;
