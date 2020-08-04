@@ -15,7 +15,6 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include "armadillo"
 #include "graph_3D.h"
 
 using namespace std;
@@ -93,6 +92,8 @@ network::network(const vector<int> &layers)
 		biases[i].randn(layer_sizes[i+1],1);
 		weights[i].randn(layer_sizes[i+1],layer_sizes[i])/sqrt(layer_sizes[i]);
 	}
+	
+	arma_rng::set_seed_random();
 }
 
 void network::test_network(data_type_T DT)
@@ -178,7 +179,7 @@ void network::SGD_CE_mat(int N_epochs, int batch_size, double eta, bool test, da
 			cout<<"epoch "<<i<<"  ";
 			test_network(DT_test);
 		}
-		else cout<<"epoch "<<i<<" completed.\n";
+		else cout<<"epoch "<<i<<" completed\n";
 	}
 	
 }
@@ -276,7 +277,7 @@ void network::SGD_CE(int N_epochs, int batch_size, double eta, bool test, data_t
 			cout<<"epoch "<<i<<"  ";
 			test_network(DT_test);
 		}
-		else cout<<"epoch "<<i<<" completed.\n";
+		else cout<<"epoch "<<i<<" completed\n";
 	}
 	
 }
@@ -404,7 +405,7 @@ void network::SGD(int N_epochs, int batch_size, double eta, bool test, data_type
 			cout<<"epoch "<<i<<"  ";
 			test_network(DT_test);
 		}
-		else cout<<"epoch "<<i<<" completed.\n";
+		else cout<<"epoch "<<i<<" completed\n";
 	}
 	
 }
@@ -525,8 +526,8 @@ void network::load_data()
 	vector<uint8_t> labels;
 	vector<mat> images;
 	
-	string label_file("../../../MNIST/train-labels-idx1-ubyte");
-	string image_file("../../../MNIST/train-images-idx3-ubyte");
+	string label_file("../../MNIST/train-labels-idx1-ubyte");
+	string image_file("../../MNIST/train-images-idx3-ubyte");
 	load_dataset(label_file, image_file, labels, images);
 //	load_dataset(label_file, image_file, training_labels, training_images);
 //	N_training=training_labels.size();
@@ -554,8 +555,8 @@ void network::load_data()
 		eval_images[i-N_training]=images[sh_indices[i]];
 	}
 	
-	label_file="../../../MNIST/t10k-labels-idx1-ubyte";
-	image_file="../../../MNIST/t10k-images-idx3-ubyte";
+	label_file="../../MNIST/t10k-labels-idx1-ubyte";
+	image_file="../../MNIST/t10k-images-idx3-ubyte";
 	load_dataset(label_file, image_file, test_labels, test_images);
 	
 	N_test=test_labels.size();
@@ -565,6 +566,7 @@ void network::load_data()
 void network::load_dataset(string label_file_name, string image_file_name, vector<uint8_t> &labels, vector<mat> &images)
 {
 	ifstream label_file(label_file_name,ios::binary);
+//	igzstream label_file((label_file_name+".gz").c_str(),ios::binary);
 	
 	if (!label_file)
 	{
@@ -596,6 +598,7 @@ void network::load_dataset(string label_file_name, string image_file_name, vecto
 	}
 	
 	ifstream image_file(image_file_name,ios::binary);
+//	igzstream image_file(image_file_name.c_str(),ios::binary);
 	
 	image_file.read(reinterpret_cast< char * >( &mn ), 4 );
 	image_file.read(reinterpret_cast< char * >( &N_images ), 4 );
