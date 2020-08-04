@@ -16,7 +16,6 @@
 #include <vector>
 #include <string>
 #include "graph_3D.h"
-//#include "gzstream.h"
 
 using namespace std;
 using namespace arma;
@@ -93,6 +92,8 @@ network::network(const vector<int> &layers)
 		biases[i].randn(layer_sizes[i+1],1);
 		weights[i].randn(layer_sizes[i+1],layer_sizes[i])/sqrt(layer_sizes[i]);
 	}
+	
+	arma_rng::set_seed_random();
 }
 
 void network::test_network(data_type_T DT)
@@ -178,7 +179,7 @@ void network::SGD_CE_mat(int N_epochs, int batch_size, double eta, bool test, da
 			cout<<"epoch "<<i<<"  ";
 			test_network(DT_test);
 		}
-		else cout<<"epoch "<<i<<" completed.\n";
+		else cout<<"epoch "<<i<<" completed\n";
 	}
 	
 }
@@ -276,7 +277,7 @@ void network::SGD_CE(int N_epochs, int batch_size, double eta, bool test, data_t
 			cout<<"epoch "<<i<<"  ";
 			test_network(DT_test);
 		}
-		else cout<<"epoch "<<i<<" completed.\n";
+		else cout<<"epoch "<<i<<" completed\n";
 	}
 	
 }
@@ -404,7 +405,7 @@ void network::SGD(int N_epochs, int batch_size, double eta, bool test, data_type
 			cout<<"epoch "<<i<<"  ";
 			test_network(DT_test);
 		}
-		else cout<<"epoch "<<i<<" completed.\n";
+		else cout<<"epoch "<<i<<" completed\n";
 	}
 	
 }
@@ -565,7 +566,7 @@ void network::load_data()
 void network::load_dataset(string label_file_name, string image_file_name, vector<uint8_t> &labels, vector<mat> &images)
 {
 	ifstream label_file(label_file_name,ios::binary);
-//	igzstream label_file(label_file_name.c_str(),ios::binary);
+//	igzstream label_file((label_file_name+".gz").c_str(),ios::binary);
 	
 	if (!label_file)
 	{
