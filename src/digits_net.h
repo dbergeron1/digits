@@ -2,7 +2,9 @@
 //  digits_net.h
 //  digits
 //
-//  Created by Dom2 on 20-07-28.
+//  Created by Dominic Bergeron on 20-07-28.
+//  This code is essentially a C++ translation of Michael Nielsen's Python code for the standard feedforward neural network used in his online book Neural Networks and Deep Learning (http://neuralnetworksanddeeplearning.com/index.html), with some additional matrix optimizations in the backpropagation routine
+//
 //
 
 #ifndef digits_net_h
@@ -50,14 +52,14 @@ public:
 	void update_batch_CE(vector<uint8_t> labels, vector<mat> images, double eta, int N_tr, double reg_f);
 	void backprop_CE(uint8_t label, const mat &image, vector<mat> &delta_grad_w, vector<mat> &delta_grad_b);
 	mat delta_out(mat a_out, uint8_t label);
-	void SGD_CE_mat(int N_epochs, int batch_size, double eta, bool test=false, data_type_T DT_test=TEST, int N_tr=50000, double reg_f=0);
+	void SGD_CE_mat(int N_epochs_max, int batch_size, double eta_init, bool test=false, data_type_T DT_test=TEST, int N_tr=50000, double reg_f=0, int pl_lgth_max=10, double red_f_eta=2.0, double max_eta_ratio=5.0);
 	void update_batch_CE_mat(const Row<uint8_t> &labels, const mat &images, double eta, int N_tr, double reg_f);
 	void backprop_CE_mat(const Row<uint8_t> &labels, const mat &images, vector<mat> &grad_w, vector<mat> &grad_b);
 	mat delta_out_mat(mat a_out, Row<uint8_t> labels);
 	
 	
-	void test_network(data_type_T DT=TEST);
-	void test_network(const vector<uint8_t> &labels, const vector<mat> &images);
+	double test_network(data_type_T DT=TEST);
+	double test_network(const vector<uint8_t> &labels, const vector<mat> &images);
 	int digit(mat a_out);
 	
 	vector<int> layer_sizes;
@@ -96,23 +98,26 @@ network::network(const vector<int> &layers)
 	arma_rng::set_seed_random();
 }
 
-void network::test_network(data_type_T DT)
+double network::test_network(data_type_T DT)
 {
+	double r;
 	switch (DT)
 	{
 		case EVAL:
-			test_network(eval_labels, eval_images);
+			r=test_network(eval_labels, eval_images);
 			break;
 		case TRAINING:
-			test_network(training_labels, training_images);
+			r=test_network(training_labels, training_images);
 			break;
 		default:
-			test_network(test_labels, test_images);
+			r=test_network(test_labels, test_images);
 			break;
 	}
+	
+	return r;
 }
 
-void network::test_network(const vector<uint8_t> &labels, const vector<mat> &images)
+double network::test_network(const vector<uint8_t> &labels, const vector<mat> &images)
 {
 	int Ntst=labels.size();
 	
@@ -123,7 +128,9 @@ void network::test_network(const vector<uint8_t> &labels, const vector<mat> &ima
 		a_out=feedforward(images[i]);
 		if (digit(a_out)==(int)labels[i]) N_success++;
 	}
-	cout<<"N_success / N_test: "<<N_success<<" / "<<N_test<<endl;
+	cout<<"N_success / N_test: "<<N_success<<" / "<<Ntst<<endl;
+	
+	return ((double)N_success)/Ntst;
 }
 
 int network::digit(mat a_out)
@@ -148,9 +155,11 @@ int network::digit(mat a_out)
 }
 
 
-void network::SGD_CE_mat(int N_epochs, int batch_size, double eta, bool test, data_type_T DT_test, int N_tr, double reg_f)
+void network::SGD_CE_mat(int N_epochs_max, int batch_size, double eta_init, bool test, data_type_T DT_test, int N_tr, double reg_f, int pl_lgth_max, double red_f_eta, double max_eta_ratio)
 {
-	int i, j, k;
+	int i, j, k, i_max_rate;
+	double success_rate, max_success_rate=0;
+	double eta=eta_init;
 	
 	Row<uint8_t> labels(batch_size);
 	mat images(N_pixels,batch_size);
@@ -162,7 +171,8 @@ void network::SGD_CE_mat(int N_epochs, int batch_size, double eta, bool test, da
 	Col<int> indices=linspace<Col<int>>(0,N_tr-1,N_tr);
 	Col<int> sh_indices=indices;
 	
-	for (i=0; i<N_epochs; i++)
+	i=0;
+	while (i<N_epochs_max && eta_init/eta<max_eta_ratio)
 	{
 		sh_indices=shuffle(sh_indices);
 		for (j=0; j<N_batch; j++)
@@ -177,9 +187,27 @@ void network::SGD_CE_mat(int N_epochs, int batch_size, double eta, bool test, da
 		if (test)
 		{
 			cout<<"epoch "<<i<<"  ";
-			test_network(DT_test);
+			success_rate=test_network(DT_test);
+			if (success_rate>max_success_rate)
+			{
+				max_success_rate=success_rate;
+				i_max_rate=i;
+			}
+			if (i-i_max_rate>pl_lgth_max)
+			{
+				eta=eta/red_f_eta;
+				cout<<"new learning rate: "<<eta<<endl;
+				i_max_rate=i;
+				if (eta_init/eta>max_eta_ratio)
+				{
+					cout<<"SGD_CE_mat(): maximum learning rate ratio reached\n";
+				}
+			//	cout<<"SGD_CE_mat(): plateau reached in success rate\n";
+			//	break;
+			}
 		}
 		else cout<<"epoch "<<i<<" completed\n";
+		i++;
 	}
 	
 }
@@ -211,14 +239,10 @@ void network::backprop_CE_mat(const Row<uint8_t> &labels, const mat &images, vec
 	
 	grad_w.resize(N_layers-1);
 	grad_b.resize(N_layers-1);
-	for (i=0; i<N_layers-1; i++)
-	{
-		grad_w[i].zeros(size(weights[i]));
-		grad_b[i].zeros(size(biases[i]));
-	}
-	
+
 	mat row_ones=ones(1,batch_size);
 	mat biases_mat;
+	Cube<double> grad_w_tmp;
 	
 	vector<mat> activations(N_layers);
 	activations[0]=images;
@@ -232,7 +256,10 @@ void network::backprop_CE_mat(const Row<uint8_t> &labels, const mat &images, vec
 	i=N_layers-2;
 	mat deltas=delta_out_mat(activations[i+1], labels);
 	grad_b[i]=sum(deltas,1);
-	for (j=0; j<batch_size; j++) grad_w[i]=grad_w[i]+deltas.col(j)*(activations[i].col(j)).t();
+	grad_w_tmp.zeros(weights[i].n_rows,weights[i].n_cols,batch_size);
+#pragma omp parallel for private(j)
+	for (j=0; j<batch_size; j++) grad_w_tmp.slice(j)=deltas.col(j)*(activations[i].col(j)).t();
+	grad_w[i]=sum(grad_w_tmp,2);
 	mat dafz, wd;
 	for (i=N_layers-3; i>=0; i--)
 	{
@@ -240,11 +267,13 @@ void network::backprop_CE_mat(const Row<uint8_t> &labels, const mat &images, vec
 		wd=weights[i+1].t()*deltas;
 		deltas=wd % dafz;
 		grad_b[i]=sum(deltas,1);
-		for (j=0; j<batch_size; j++) grad_w[i]=grad_w[i]+deltas.col(j)*(activations[i].col(j)).t();
+		grad_w_tmp.zeros(weights[i].n_rows,weights[i].n_cols,batch_size);
+#pragma omp parallel for private(j)
+		for (j=0; j<batch_size; j++) grad_w_tmp.slice(j)=deltas.col(j)*(activations[i].col(j)).t();
+		grad_w[i]=sum(grad_w_tmp,2);
 	}
 	
 }
-
 
 void network::SGD_CE(int N_epochs, int batch_size, double eta, bool test, data_type_T DT_test, int N_tr, double reg_f)
 {
