@@ -1,13 +1,13 @@
-number of hidden layers: 1
-hidden layers sizes (s1 s2 ...): 30
-maximum number of epochs: 10
-batch size: 20
-initial learning rate: 0.4
+number of hidden layers: 3
+hidden layers sizes (s1 s2 ...): 30 30 30
+maximum number of epochs: 30
+batch size: 10
+initial learning rate: 0.1
 learning rate reduction factor: 2
 maximum learning rate ratio: 9
 size of training dataset (<=50000): 50000
 regularization factor: 5.0
-number of threads: 4
+number of threads: 2
 test network after each epoch (yes/[no]): yes
-test dataset (EVAL/TRAINING/[TEST]): TEST
+test dataset (EVAL/TRAINING/[TEST]): EVAL
 maximum plateau length: 10 

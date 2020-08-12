@@ -2,7 +2,9 @@
 //  digits_net.h
 //  digits
 //
-//  Created by Dom2 on 20-07-28.
+//  Created by Dominic Bergeron on 20-07-28.
+//  This code is essentially a C++ translation of Michael Nielsen's Python code for the standard feedforward neural network used in his online book Neural Networks and Deep Learning (http://neuralnetworksanddeeplearning.com/index.html), with some additional matrix optimizations in the backpropagation routine
+//
 //
 
 #ifndef digits_net_h
@@ -272,50 +274,6 @@ void network::backprop_CE_mat(const Row<uint8_t> &labels, const mat &images, vec
 	}
 	
 }
-
-/*
-void network::backprop_CE_mat(const Row<uint8_t> &labels, const mat &images, vector<mat> &grad_w, vector<mat> &grad_b)
-{
-	int i,j;
-	
-	int batch_size=labels.n_cols;
-	
-	grad_w.resize(N_layers-1);
-	grad_b.resize(N_layers-1);
-	for (i=0; i<N_layers-1; i++)
-	{
-		grad_w[i].zeros(size(weights[i]));
-		grad_b[i].zeros(size(biases[i]));
-	}
-	
-	mat row_ones=ones(1,batch_size);
-	mat biases_mat;
-	
-	vector<mat> activations(N_layers);
-	activations[0]=images;
-	vector<mat> zs(N_layers-1);
-	for (i=0; i<N_layers-1; i++)
-	{
-		biases_mat=biases[i]*row_ones;
-		zs[i]=weights[i]*activations[i]+biases_mat;
-		activations[i+1]=activation_func(zs[i]);
-	}
-	i=N_layers-2;
-	mat deltas=delta_out_mat(activations[i+1], labels);
-	grad_b[i]=sum(deltas,1);
-	for (j=0; j<batch_size; j++) grad_w[i]=grad_w[i]+deltas.col(j)*(activations[i].col(j)).t();
-	mat dafz, wd;
-	for (i=N_layers-3; i>=0; i--)
-	{
-		dafz=diff_activation_func(zs[i]);
-		wd=weights[i+1].t()*deltas;
-		deltas=wd % dafz;
-		grad_b[i]=sum(deltas,1);
-		for (j=0; j<batch_size; j++) grad_w[i]=grad_w[i]+deltas.col(j)*(activations[i].col(j)).t();
-	}
-	
-}
-*/
 
 void network::SGD_CE(int N_epochs, int batch_size, double eta, bool test, data_type_T DT_test, int N_tr, double reg_f)
 {

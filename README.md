@@ -1,3 +1,3 @@
 # digits
 
-Feedforward neural networks that recognizes digits. It is essentially a C++ version of Michael Nielsen's Python code used in his online book: [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/index.html), but the backpropagation routine is optimized to use less loops and more matrix-wise operations, which are performed using the [armadillo library](http://arma.sourceforge.net/). 
+Standard feedforward neural networks with fully connected layers trained for digits recognition with the [MNIST dataset](http://yann.lecun.com/exdb/mnist/). It is essentially a C++ version of Michael Nielsen's Python code used in his online book [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/index.html). The backpropagation routine has additional matrix optimizations using the [armadillo library](http://arma.sourceforge.net/), which results in a 3.5 factor in execution speed compared to the Python code.
